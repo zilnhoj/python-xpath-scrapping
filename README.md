@@ -8,5 +8,11 @@ You need to set up your Google Analytics credentials to use this
 There are good instructions on how to get the library and authenticated to use it on the google2pandas github page https://github.com/panalysis/Google2Pandas
 
 
+Set the variable called 'url' with the URL of the page you want to scrape the data from
+
+Get the XPath expression for the data you want to scrape from the page
+
+Set the varible 'listofslugs' with the XPath expression
+
 
 
