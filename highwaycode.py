@@ -33,9 +33,8 @@ chunksize = 5000
 count = 0
 
 for i in listofslugs:
-	gg = str(i)
-	filters='pagePath=~' + gg
-	# try:
+	filters='pagePath=~{}'.format(i)
+
 	hwy = {\
 		    'ids'           : ids,
 		    'metrics'       : metrics,
@@ -51,29 +50,28 @@ for i in listofslugs:
 	# p1 = pd.concat([x for x in dfhwy])
 	df1 = df1.append(dfhwy) #add each result to the dataframe
 	count+=1
-	print 'general metrics: {}'.format(str(count)) #count to show on screen the progress of the script	
+	print 'general metrics: ' +str(count) #count to show on screen the progress of the script
 
 # This section of code adds a total, cumulaitive 
 
 df1 = df1.reset_index(level=1)
-df1 = df1.sort_values(by='pageviews', ascending=False)
+df1 = df1.sort(['pageviews'], ascending=False)
 df1['total'] = df1['pageviews'].sum()
 df1.drop_duplicates(inplace=True)
 df1['cumulative'] = df1['pageviews'].cumsum()
 df1['percentage'] = df1['cumulative']/df1['total']*100.0
 
-
-df1.to_csv('generalmetrics.csv', encoding='utf8')
+df1.to_csv('general_metrics.csv',encoding='utf8')
 # ============================================================================================================================================
 #  next page
 # ============================================================================================================================================
-
 
 nextdimensions = ['pagePath', 'previousPagePath']
 nextmetrics = ['pageviews']
 nextcount = 0
 for k in listofslugs:
-	filters='previousPagePath=~{}'.format(str(k))
+	jj = str(k)
+	filters='previousPagePath=~' + jj
 	# try:
 	hwynext = {\
 		    'ids'           : ids,
@@ -87,13 +85,17 @@ for k in listofslugs:
 	
 	hwynext, formatted_qry = ga.execute_query(**hwynext)
 
+	# nextpage = pd.concat([x for x in df1])
 	df3 = df3.append(hwynext)
 	nextcount+=1
-	print 'next page count: {}'.format(str(nextcount))
-
+	print 'next page count: ' + str(nextcount)
+	# except Exception:
+	# 	df3 = df3.append(nextpage)
 		
 df3 = df3.reset_index(level=1)
+# df3['nextpage'],df3['page'] = zip(*df3['index'])
 df3.drop_duplicates(inplace=True)
+# df3 = df3.drop('index', axis=1)
 df3 = df3[['pagePath', 'previousPagePath', 'pageviews']]
 df3.sort_values(by=['pageviews'], ascending=False, inplace=True)
 
@@ -108,9 +110,10 @@ refmetrics = ['sessions','percentNewSessions', 'newUsers']
 refcount = 0
 # try:
 for j in listofslugs:
-	
-	filters='landingPagePath=~{}'.format(str(j)),
 	try:
+		hh = str(j)
+		filters=['landingPagePath=~' + hh],
+
 		hwyref = {\
 			    'ids'           : ids,
 			    'metrics'       : refmetrics,
@@ -122,19 +125,20 @@ for j in listofslugs:
 
 		ga = GoogleAnalyticsQuery(token_file_name='analytics.dat')
 		dfref, formatted_qry = ga.execute_query(**hwyref)
-	# ref = pd.concat([x for x in dfref])
-		df2 = df2.append(dfref)
+
+		ref = pd.concat([x for x in dfref])
+		df2 = df2.append(ref)
 		refcount+=1
-		print 'referring count: {}'.format(str(refcount))
-	except KeyError:
-		dfref = pd.DataFrame({'landingPagePath':str(j),'fullReferrer':'none', 'sessions':0,'percentNewSessions':0,'newUsers':0},index=[0])
-		df3 = df2.append(dfref)
+		print 'referring count: ' +str(refcount)
+	except Exception:
+		df2 = df2.append(ref)
 
 df2 = df2.reset_index(level=1)
+df2['referrer'],df2['landingPage'] = zip(*df2['index'])
 df2.drop_duplicates(inplace=True)
 df2 = df2.drop('index', axis=1)
-df2 = df2[['fullReferrer', 'landingPagePath', 'sessions']]
-df2 = df2.sort_values(by='sessions', ascending=False)
+df2 = df2[['referrer', 'landingPage', 'sessions']]
+df2 = df2.sort(['sessions'], ascending=False)
 
 df2.to_csv('landingpages.csv', encoding='utf8')
 # ============================================================================================================================================
@@ -145,11 +149,10 @@ df2.to_csv('landingpages.csv', encoding='utf8')
 searchdimensions = ['searchStartPage', 'searchKeyword']
 searchmetrics = ['searchSessions','searchExits','searchUniques']
 searchcount = 0
-
 for l in listofslugs:
+	ll = str(l)
+	filters=['searchStartPage=~' + ll]
 	try:
-		filters=['searchStartPage=~{}'.format(str(l))]
-		# try:
 		hwysearch = {\
 			    'ids'           : ids,
 			    'metrics'       : searchmetrics,
@@ -162,20 +165,17 @@ for l in listofslugs:
 		ga = GoogleAnalyticsQuery(token_file_name='analytics.dat')
 		dfsearch, formatted_qry = ga.execute_query(**hwyref)
 
-		# searchpage = pd.concat([x for x in dfsearch])
-		df4 = df4.append(dfsearch)
+		searchpage = pd.concat([x for x in dfsearch])
+		df4 = df4.append(searchpage)
 		searchcount+=1
-	except KeyError:
-		nores = pd.DataFrame({'searchStartPage':str(j),'searchKeyword':'none', 'searchSessions':0,'searchExits':0,'searchUniques':0},index=[0])
-		df4 = df4.append(nores)
-print 'search page count: {}'.format(str(searchcount))
-# except Exception:
-	# 	df4 = df4.append(searchpage)
+		print 'search page count: ' + str(searchcount)
+	except Exception:
+		df4 = df4.append(searchpage)
 		
 df4 = df4.reset_index(level=1)
-# df4['term'],df4['searchStartPage'] = zip(*df4['index'])
+df4['term'],df4['searchStartPage'] = zip(*df4['index'])
 df4.drop_duplicates(inplace=True)
 df4 = df4.drop('index', axis=1)
-df4 = df4[['searchKeyword','searchStartPage','searchUniques']]
+df4 = df4[['term','searchStartPage','searchUniques']]
 
 df4.to_csv('serchesonpage.csv',encoding='utf8')
